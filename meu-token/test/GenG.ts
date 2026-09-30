@@ -35,4 +35,22 @@ describe("GenG", function () {
       token.connect(outraConta).mint(outraConta.address, 100n)
     ).to.be.revert(ethers);
   });
+
+  it("permite queimar (burn) tokens reduzindo o saldo e o fornecimento total", async function () {
+    const { token, dono } = await networkHelpers.loadFixture(implantarFixture);
+
+    // Quantidade a queimar considerando as 18 casas decimais (ex: 100 tokens)
+    const valorParaQueimar = 100n * 10n ** 18n;
+    const totalInicial = await token.totalSupply();
+
+    // Executa a queima
+    await token.burn(valorParaQueimar);
+
+    // Valida se o fornecimento total e o saldo do dono foram reduzidos
+    const totalAposBurn = await token.totalSupply();
+    const saldoDonoAposBurn = await token.balanceOf(dono.address);
+
+    expect(totalAposBurn).to.equal(totalInicial - valorParaQueimar);
+    expect(saldoDonoAposBurn).to.equal(totalInicial - valorParaQueimar);
+  });
 });

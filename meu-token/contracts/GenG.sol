@@ -2,11 +2,12 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GenG is ERC20, Ownable {
+contract GenG is ERC20, ERC20Burnable, Ownable {
     constructor(uint256 fornecimentoInicial)
-        ERC20("GenG", "GNG") 
+        ERC20("GenG", "GNG")
         Ownable(msg.sender)
     {
         _mint(msg.sender, fornecimentoInicial * 10 ** decimals());
