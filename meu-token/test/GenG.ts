@@ -53,4 +53,36 @@ describe("GenG", function () {
     expect(totalAposBurn).to.equal(totalInicial - valorParaQueimar);
     expect(saldoDonoAposBurn).to.equal(totalInicial - valorParaQueimar);
   });
+
+  it("impede transferências quando o contrato está pausado", async function () {
+    const { token, outraConta } = await networkHelpers.loadFixture(implantarFixture);
+
+    // Pausa o contrato
+    await token.pause();
+
+    // Tenta transferir tokens enquanto pausado
+    await expect(
+      token.transfer(outraConta.address, 100n)
+    ).to.be.revert(ethers);
+  });
+
+  it("permite transferências novamente após ser despausado", async function () {
+    const { token, outraConta } = await networkHelpers.loadFixture(implantarFixture);
+
+    // Pausa e despausa
+    await token.pause();
+    await token.unpause();
+
+    // Transferência deve funcionar normalmente
+    await token.transfer(outraConta.address, 100n);
+    expect(await token.balanceOf(outraConta.address)).to.equal(100n);
+  });
+
+  it("impede que contas sem permissão pausem o contrato", async function () {
+    const { token, outraConta } = await networkHelpers.loadFixture(implantarFixture);
+
+    await expect(
+      token.connect(outraConta).pause()
+    ).to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+  });
 });
