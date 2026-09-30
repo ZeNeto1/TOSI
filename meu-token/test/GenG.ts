@@ -4,12 +4,12 @@ import { network } from "hardhat";
 const { ethers, networkHelpers } = await network.create();
 
 describe("GenG", function () {
-  async function implantarFixture() {
-    const [dono, outraConta] = await ethers.getSigners();
-    // Implantando o contrato GenG com fornecimento inicial de 1.000.000 de tokens
-    const token = await ethers.deployContract("GenG", [1_000_000n]);
-    return { token, dono, outraConta };
-  }
+async function implantarFixture() {
+  const [dono, outraConta] = await ethers.getSigners();
+  // Passando 1.000.000 como inicial e 2.000.000 como cap
+  const token = await ethers.deployContract("GenG", [1_000_000n, 2_000_000n]);
+  return { token, dono, outraConta };
+}
 
   it("tem o nome e o símbolo corretos", async function () {
     const { token } = await networkHelpers.loadFixture(implantarFixture);
@@ -85,4 +85,16 @@ describe("GenG", function () {
       token.connect(outraConta).pause()
     ).to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
   });
+
+ it("impede a criação (mint) de tokens acima do teto máximo (cap)", async function () {
+  const { token, dono } = await networkHelpers.loadFixture(implantarFixture);
+
+  // Já existem 1.000.000 de tokens. Criar mais 1.000.000 funciona:
+  await token.mint(dono.address, 1_000_000n);
+
+  // Tentar criar mais 1 token (ultrapassando os 2.000.000 do cap) deve falhar:
+  await expect(
+    token.mint(dono.address, 1n)
+  ).to.be.revertedWithCustomError(token, "ERC20ExceededCap");
+});
 });
